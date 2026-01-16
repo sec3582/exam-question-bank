@@ -253,9 +253,6 @@ const state = {
   lastSaveError: "",
 };
 
-// Expose minimal state for quiz.js (scope selection)
-window.appState = state;
-
 /* ---------- Utils ---------- */
 function toImageSrc(val) {
   const v = String(val || "").trim();
@@ -1261,53 +1258,55 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 })();
 
-
-/* ---------- Study Pet (tiny companion) ---------- */
+/* ---------- Study Pet (pixel cat companion) ---------- */
 (function setupStudyPet(){
   const el = document.getElementById("studyPet");
   if (!el) return;
 
-  const STATES = {
-    eat:   { cls: "is-eat",   emoji: "🍙", title: "補充能量中" },
-    idle:  { cls: "is-idle",  emoji: "🐾", title: "陪你一起在這裡" },
-    focus: { cls: "is-focus", emoji: "📚", title: "一起專心一下" },
-    sleep: { cls: "is-sleep", emoji: "😴", title: "先休息一下，等等再戰" },
-  };
-
-  function pickStateByTime(d = new Date()){
-    const h = d.getHours();
-    // 06–09 吃早餐、09–18 陪讀、18–22 再專心一波、22–06 睡覺
-    if (h >= 6 && h < 9) return "eat";
-    if (h >= 9 && h < 18) return "idle";
-    if (h >= 18 && h < 22) return "focus";
-    return "sleep";
+  // state by local time
+  function stateByHour(hour) {
+    if (hour >= 6 && hour < 9) return { state: "eat", title: "小貓吃早餐中" };
+    if (hour >= 9 && hour < 18) return { state: "idle", title: "小貓陪你發呆一下" };
+    if (hour >= 18 && hour < 22) return { state: "focus", title: "小貓陪你讀書" };
+    return { state: "sleep", title: "小貓睡覺中…" };
   }
 
-  function applyState(key){
-    const st = STATES[key] || STATES.idle;
-    el.classList.remove("is-eat","is-idle","is-focus","is-sleep");
-    el.classList.add(st.cls);
-    el.dataset.emoji = st.emoji;
-    el.title = `陪讀小夥伴｜${st.title}`;
+  function tickState() {
+    const d = new Date();
+    const { state, title } = stateByHour(d.getHours());
+    el.dataset.state = state;
+    el.title = title;
   }
 
-  // 偶爾做個小動作（不打擾，但有陪伴感）
-  function maybeDoTinyAction(){
+  // micro actions (low frequency, non-annoying)
+  function micro() {
+    // do nothing if not visible
+    if (document.hidden) return;
+
     const r = Math.random();
-    // 10% 機率短暫換成「focus」，再回到原狀
-    if (r < 0.10) {
-      const base = pickStateByTime();
-      applyState("focus");
-      setTimeout(() => applyState(base), 2500);
+    // blink more likely than tail flick
+    if (r < 0.12) {
+      el.classList.add("is-blink");
+      setTimeout(() => el.classList.remove("is-blink"), 220);
+      return;
+    }
+    if (r < 0.18) {
+      el.classList.add("is-flick");
+      setTimeout(() => el.classList.remove("is-flick"), 520);
     }
   }
 
-  function tick(){
-    applyState(pickStateByTime());
-    maybeDoTinyAction();
-  }
+  // click: a tiny interactive reassurance
+  el.addEventListener("click", () => {
+    el.classList.add("is-blink");
+    setTimeout(() => el.classList.remove("is-blink"), 220);
+  });
 
-  tick();
-  // 每分鐘檢查一次（時間到會自然換動作）
-  setInterval(tick, 60 * 1000);
+  tickState();
+  setInterval(tickState, 30 * 1000);
+  setInterval(micro, 7 * 1000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) tickState();
+  });
 })();

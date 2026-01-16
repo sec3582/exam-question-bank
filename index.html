@@ -9,12 +9,94 @@
 <body>
   <div class="app">
     <!-- Top bar -->
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand__title">Jill 公職測驗小工具</span>
-        <!-- 陪讀小夥伴：不用外部圖檔，純 CSS/emoji 動畫 -->
-        <div id="studyPet" class="pet" aria-label="陪讀小夥伴" title="陪你一起讀書"></div>
-      </div>
+	<header class="topbar">
+	  <div class="brand">
+	    <span class="brand__title">Jill 公職測驗小工具</span>
+	    <!-- 陪讀像素小貓：不依賴外部圖檔，使用 SVG + CSS 動畫（16-bit 風） -->
+	    <div id="studyPet" class="pet pet--pixel" aria-label="陪讀小貓" title="陪你一起讀書" data-state="idle">
+	      <svg class="pet__svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-hidden="true" shape-rendering="crispEdges">
+	        <!-- base cat -->
+	        <g class="pet-cat">
+	          <!-- shadow -->
+	          <rect x="8" y="27" width="16" height="2" class="pet-shadow" />
+	
+	          <!-- tail (separate for wag) -->
+	          <g class="pet-tail">
+	            <rect x="25" y="19" width="2" height="2" class="pet-outline" />
+	            <rect x="26" y="20" width="2" height="2" class="pet-outline" />
+	            <rect x="27" y="21" width="2" height="2" class="pet-outline" />
+	            <rect x="26" y="22" width="2" height="2" class="pet-outline" />
+	            <rect x="25" y="23" width="2" height="2" class="pet-outline" />
+	
+	            <rect x="26" y="19" width="2" height="2" class="pet-fur" />
+	            <rect x="27" y="20" width="2" height="2" class="pet-fur" />
+	            <rect x="28" y="21" width="2" height="2" class="pet-fur" />
+	            <rect x="27" y="22" width="2" height="2" class="pet-fur" />
+	            <rect x="26" y="23" width="2" height="2" class="pet-fur" />
+	          </g>
+	
+	          <!-- head outline -->
+	          <rect x="10" y="8" width="12" height="2" class="pet-outline" />
+	          <rect x="8" y="10" width="16" height="10" class="pet-outline" />
+	          <!-- ears -->
+	          <rect x="10" y="6" width="2" height="2" class="pet-outline" />
+	          <rect x="20" y="6" width="2" height="2" class="pet-outline" />
+	
+	          <!-- head fill -->
+	          <rect x="10" y="10" width="12" height="10" class="pet-fur" />
+	          <rect x="10" y="8" width="12" height="2" class="pet-fur" />
+	          <rect x="12" y="6" width="2" height="2" class="pet-fur" />
+	          <rect x="18" y="6" width="2" height="2" class="pet-fur" />
+	
+	          <!-- inner ears -->
+	          <rect x="12" y="8" width="2" height="2" class="pet-ear" />
+	          <rect x="18" y="8" width="2" height="2" class="pet-ear" />
+	
+	          <!-- body outline -->
+	          <rect x="10" y="20" width="12" height="2" class="pet-outline" />
+	          <rect x="8" y="22" width="16" height="6" class="pet-outline" />
+	
+	          <!-- body fill -->
+	          <rect x="10" y="22" width="12" height="6" class="pet-fur" />
+	
+	          <!-- paws -->
+	          <rect x="12" y="26" width="2" height="2" class="pet-paw" />
+	          <rect x="18" y="26" width="2" height="2" class="pet-paw" />
+	
+	          <!-- face (eyes & nose) -->
+	          <g class="pet-face">
+	            <g class="pet-eyes">
+	              <rect x="13" y="13" width="2" height="2" class="pet-eye" />
+	              <rect x="17" y="13" width="2" height="2" class="pet-eye" />
+	            </g>
+	            <rect x="15" y="15" width="2" height="2" class="pet-nose" />
+	            <!-- little mouth -->
+	            <rect x="14" y="17" width="1" height="1" class="pet-outline" />
+	            <rect x="17" y="17" width="1" height="1" class="pet-outline" />
+	          </g>
+	        </g>
+	
+	        <!-- accessories (toggle by state) -->
+	        <g class="pet-acc pet-bowl">
+	          <rect x="9" y="27" width="6" height="2" class="pet-outline" />
+	          <rect x="10" y="26" width="4" height="1" class="pet-outline" />
+	          <rect x="10" y="27" width="4" height="2" class="pet-accent" />
+	        </g>
+	
+	        <g class="pet-acc pet-book">
+	          <rect x="18" y="24" width="6" height="4" class="pet-outline" />
+	          <rect x="19" y="25" width="4" height="2" class="pet-accent" />
+	          <rect x="19" y="27" width="4" height="1" class="pet-paper" />
+	        </g>
+	
+	        <g class="pet-acc pet-zzz">
+	          <rect x="22" y="6" width="2" height="2" class="pet-zzz" />
+	          <rect x="24" y="4" width="2" height="2" class="pet-zzz" />
+	          <rect x="26" y="2" width="2" height="2" class="pet-zzz" />
+	        </g>
+	      </svg>
+	    </div>
+	  </div>
 
       <div class="actions">
         <button id="btnAdd" class="btn primary" type="button">＋ 新增題目</button>
@@ -99,32 +181,6 @@
       </div>
 
       <div class="quiz-body">
-        <!-- Quiz Setup (scope / limit) -->
-        <div id="quizSetup" class="quiz-setup hidden" aria-hidden="true">
-          <div class="quiz-setup__title">測驗設定</div>
-
-          <div class="quiz-setup__row">
-            <label class="quiz-setup__label" for="quizScope">範圍</label>
-            <select id="quizScope" class="input">
-              <option value="all">全部題目</option>
-              <option value="subject">目前科目</option>
-              <option value="chapter">目前章節</option>
-            </select>
-          </div>
-
-          <div class="quiz-setup__row">
-            <label class="quiz-setup__label" for="quizLimit">題數</label>
-            <input id="quizLimit" class="input" type="number" min="1" step="1" value="20" />
-          </div>
-
-          <div class="quiz-setup__hint" id="quizSetupHint"></div>
-
-          <div class="quiz-setup__actions">
-            <button id="quizStart" class="btn primary" type="button">開始</button>
-            <button id="quizCancel" class="btn ghost" type="button">取消</button>
-          </div>
-        </div>
-
         <div class="quiz-block">
           <div class="quiz-label">題目</div>
           <div id="quizQText" class="quiz-text"></div>
