@@ -615,3 +615,19 @@ hr{
 .topbar .tools{
   margin-left: 12px;          /* 取消原本 auto，讓它貼著 actions */
 }
+
+/* Topbar 上的狀態 chip 不要滿版（覆蓋 .chip { width:100% }） */
+.topbar .tools .chip,
+#cloudChip {
+  width: auto !important;
+  max-width: 260px;          /* 可自行調整：避免太長撐爆 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-align: center;
+  justify-content: center;   /* 你原本 .chip 是 space-between，這裡改成置中更像狀態標籤 */
+}
+
+/* 如果你希望 chip 一直在最右邊保留 */
+#cloudChip { margin-left: auto; }
