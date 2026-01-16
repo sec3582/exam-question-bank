@@ -16,12 +16,17 @@
         <button id="btnAdd" class="btn primary" type="button">＋ 新增題目</button>
         <button id="btnQuiz" class="btn" type="button">▶ 開始測驗</button>
       </div>
-
       <div class="tools">
         <input id="search" class="input" placeholder="搜尋題目…" />
         <button id="btnExport" class="btn ghost" type="button">匯出 JSON</button>
         <button id="btnImport" class="btn ghost" type="button">匯入 JSON</button>
+
+        <button id="btnGoogleSignIn" class="btn ghost" type="button">登入 Google</button>
+        <button id="btnCloudPull" class="btn ghost" type="button">雲端載入</button>
+        <button id="btnCloudPush" class="btn ghost" type="button">雲端同步</button>
+        <span id="cloudChip" class="chip" title="">未登入</span>
       </div>
+
     </header>
 
     <!-- Two columns -->
@@ -111,6 +116,7 @@
     </div>
   </div>
 
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
   <script src="./app.js"></script>
   <script src="./quiz.js"></script>

@@ -20,6 +20,200 @@ const STORAGE_KEYS = {
   cards: "qp_cards",
 };
 
+/* ---------- Google Drive appDataFolder (OAuth, manual sync) ---------- */
+const GOOGLE_CLIENT_ID = "552475249177-ah6q85dhue6sho8kor92gob3dlcu9ook.apps.googleusercontent.com";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const DRIVE_FILENAME = "exam-question-bank.json";
+
+let tokenClient = null;
+let accessToken = "";
+
+function setCloudChip(text, title = "") {
+  const el = document.getElementById("cloudChip");
+  if (!el) return;
+  el.textContent = text;
+  el.title = title || "";
+}
+
+function initGoogleTokenClient() {
+  if (!window.google?.accounts?.oauth2) return false;
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: () => {}, // 會在 requestToken 時覆寫
+  });
+
+  return true;
+}
+
+function requestToken(interactive = true) {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) {
+      const ok = initGoogleTokenClient();
+      if (!ok) return reject(new Error("Google Identity Services 尚未載入（請確認 index.html 已加入 gsi/client）"));
+    }
+
+    if (accessToken) return resolve(accessToken);
+
+    tokenClient.callback = (resp) => {
+      if (resp?.access_token) {
+        accessToken = resp.access_token;
+        setCloudChip("已登入", "可雲端載入/同步（appDataFolder）");
+        resolve(accessToken);
+      } else {
+        reject(new Error("未取得 access token"));
+      }
+    };
+
+    tokenClient.requestAccessToken({ prompt: interactive ? "consent" : "" });
+  });
+}
+
+async function driveFetch(url, { method = "GET", headers = {}, body } = {}) {
+  const token = await requestToken(true);
+  const res = await fetch(url, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...headers },
+    body,
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Drive API ${res.status}: ${txt || res.statusText}`);
+  }
+  return res;
+}
+
+async function findAppDataFileId() {
+  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const url =
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}` +
+    `&fields=files(id,name,modifiedTime)&pageSize=10`;
+  const res = await driveFetch(url);
+  const data = await res.json();
+  return data.files?.[0]?.id || "";
+}
+
+function buildMultipart(metadata, jsonText) {
+  const boundary = "----qptool" + Math.random().toString(16).slice(2);
+  const body =
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${jsonText}\r\n` +
+    `--${boundary}--\r\n`;
+  return { boundary, body };
+}
+
+async function loadAppData() {
+  const fileId = await findAppDataFileId();
+  if (!fileId) {
+    // 雲端還沒有檔案：視為空
+    subjects = [];
+    cards = [];
+    return;
+  }
+
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  const text = await res.text();
+  const obj = JSON.parse(text || "{}");
+
+  subjects = Array.isArray(obj.subjects) ? obj.subjects : [];
+  cards = Array.isArray(obj.cards) ? obj.cards : [];
+}
+
+async function saveAppData() {
+  const fileId = await findAppDataFileId();
+  const payloadObj = { version: 1, updatedAt: new Date().toISOString(), subjects, cards };
+  const payloadText = JSON.stringify(payloadObj);
+
+  const metadata = fileId
+    ? { name: DRIVE_FILENAME }
+    : { name: DRIVE_FILENAME, parents: ["appDataFolder"] };
+
+  const { boundary, body } = buildMultipart(metadata, payloadText);
+
+  if (!fileId) {
+    await driveFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+      method: "POST",
+      headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+      body,
+    });
+  } else {
+    await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+      method: "PATCH",
+      headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+      body,
+    });
+  }
+}
+
+function initCloudActions() {
+  const btnLogin = document.getElementById("btnGoogleSignIn");
+  const btnPull = document.getElementById("btnCloudPull");
+  const btnPush = document.getElementById("btnCloudPush");
+
+  if (btnLogin) {
+    btnLogin.addEventListener("click", async () => {
+      try {
+        setCloudChip("登入中…");
+        await requestToken(true);
+      } catch (e) {
+        console.error(e);
+        setCloudChip("未登入", String(e.message || e));
+        alert(String(e.message || e));
+      }
+    });
+  }
+
+  if (btnPull) {
+    btnPull.addEventListener("click", async () => {
+      try {
+        setCloudChip("載入中…");
+        await loadAppData();
+
+        // 下載完也存回本機，讓你離線也能用
+        await localforage.setItem(STORAGE_KEYS.subjects, subjects);
+        await localforage.setItem(STORAGE_KEYS.cards, cards);
+
+        // 重繪
+        window.subjects = subjects;createStorageAdapter(mode)
+        window.cards = cards;
+        state.subjectId = subjects[0]?.id ?? null;
+        state.chapter = "";
+        state.selectedCardId = null;
+        state.query = "";
+        renderAll();
+
+        setCloudChip("載入完成");
+      } catch (e) {
+        console.error(e);
+        setCloudChip("失敗", String(e.message || e));
+        alert(String(e.message || e));
+      }
+    });
+  }
+
+  if (btnPush) {
+    btnPush.addEventListener("click", async () => {
+      try {
+        setCloudChip("同步中…");
+        await saveAppData();
+        setCloudChip("同步完成");
+      } catch (e) {
+        console.error(e);
+        setCloudChip("失敗", String(e.message || e));
+        alert(String(e.message || e));
+      }
+    });
+  }
+
+  setCloudChip("未登入", "請先登入 Google");
+}
+
+
 let subjects = [];
 let cards = [];
 
@@ -156,7 +350,16 @@ function createStorageAdapter(mode) {
     });
   }
 
+  async function loadAppdata() {
+    await loadAppData();
+  }
+
+  async function saveAppdata() {
+    await saveAppData();
+  }
+
   async function load() {
+    if (mode === "appdata") return loadAppdata();
     if (mode === "drive") return loadDrive();
     return loadLocal();
   }
@@ -169,7 +372,8 @@ function createStorageAdapter(mode) {
 
     saving = true;
     try {
-      if (mode === "drive") await saveDrive();
+      if (mode === "appdata") await saveAppdata();
+      else if (mode === "drive") await saveDrive();
       else await saveLocal();
 
       saving = false;
@@ -185,6 +389,7 @@ function createStorageAdapter(mode) {
       return { ok: false, error: e };
     }
   }
+
 
   return { mode, load, save };
 }
@@ -947,9 +1152,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   state.selectedCardId = null;
 
   initActions();
+  initCloudActions();
   renderAll();
   setSaveChipState("saved");
 });
+
 
 /* ---------- Lightbox (keep your previous IDs) ---------- */
 (function setupImageLightbox(){
