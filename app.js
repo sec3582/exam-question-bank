@@ -253,6 +253,9 @@ const state = {
   lastSaveError: "",
 };
 
+// Expose for quiz.js (read current selection: subjectId/chapter)
+window.appState = state;
+
 /* ---------- Utils ---------- */
 function toImageSrc(val) {
   const v = String(val || "").trim();
@@ -423,13 +426,29 @@ const storage = createStorageAdapter(STORAGE_MODE);
 async function loadFromStorage() {
   await storage.load();
 
-  // normalize SRS fields for quiz.js
+  // normalize SRS fields for quiz.js (v1 memory curve)
+  // New fields: level (0~5), nextDue (timestamp|null), wrongCount
+  // Backward compatible migration from legacy ease/intervalDays/lapses/dueAt.
   for (const c of cards) {
+    // Legacy defaults (keep if user still has them)
     if (c.ease == null) c.ease = 2.3;
     if (c.intervalDays == null) c.intervalDays = 0;
     if (c.lapses == null) c.lapses = 0;
     if (c.lastReviewedAt == null) c.lastReviewedAt = null;
     if (c.dueAt == null) c.dueAt = null;
+
+    // --- Memory curve fields ---
+    if (c.level == null) {
+      const d = Number(c.intervalDays || 0);
+      // map legacy interval to a reasonable level bucket
+      c.level = d >= 30 ? 5 : d >= 14 ? 4 : d >= 7 ? 3 : d >= 3 ? 2 : d >= 1 ? 1 : 0;
+    }
+    if (c.wrongCount == null) c.wrongCount = Number(c.lapses || 0) || 0;
+    if (c.nextDue == null) {
+      const t = c.dueAt;
+      c.nextDue = t == null || t === "" ? null : Number(t);
+      if (!Number.isFinite(c.nextDue)) c.nextDue = null;
+    }
 
     // ensure legacy single image fields exist
     if (!Array.isArray(c.questionImages)) c.questionImages = c.questionImage ? [String(c.questionImage)] : [];
@@ -1255,58 +1274,5 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!el.classList.contains("img-preview")) return;
     if (!el.src) return;
     open(el.src);
-  });
-})();
-
-/* ---------- Study Pet (pixel cat companion) ---------- */
-(function setupStudyPet(){
-  const el = document.getElementById("studyPet");
-  if (!el) return;
-
-  // state by local time
-  function stateByHour(hour) {
-    if (hour >= 6 && hour < 9) return { state: "eat", title: "小貓吃早餐中" };
-    if (hour >= 9 && hour < 18) return { state: "idle", title: "小貓陪你發呆一下" };
-    if (hour >= 18 && hour < 22) return { state: "focus", title: "小貓陪你讀書" };
-    return { state: "sleep", title: "小貓睡覺中…" };
-  }
-
-  function tickState() {
-    const d = new Date();
-    const { state, title } = stateByHour(d.getHours());
-    el.dataset.state = state;
-    el.title = title;
-  }
-
-  // micro actions (low frequency, non-annoying)
-  function micro() {
-    // do nothing if not visible
-    if (document.hidden) return;
-
-    const r = Math.random();
-    // blink more likely than tail flick
-    if (r < 0.12) {
-      el.classList.add("is-blink");
-      setTimeout(() => el.classList.remove("is-blink"), 220);
-      return;
-    }
-    if (r < 0.18) {
-      el.classList.add("is-flick");
-      setTimeout(() => el.classList.remove("is-flick"), 520);
-    }
-  }
-
-  // click: a tiny interactive reassurance
-  el.addEventListener("click", () => {
-    el.classList.add("is-blink");
-    setTimeout(() => el.classList.remove("is-blink"), 220);
-  });
-
-  tickState();
-  setInterval(tickState, 30 * 1000);
-  setInterval(micro, 7 * 1000);
-
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) tickState();
   });
 })();

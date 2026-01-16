@@ -1,13 +1,22 @@
-// quiz.js — Quiz overlay + SRS (uses globals from app.js: cards, persistAll, toImageSrc)
+// quiz.js — Quiz overlay + Memory Curve (SRS)
+// Depends on globals from app.js: window.cards, window.persistAll, window.toImageSrc, window.appState
 
 const quiz = {
   active: false,
   queue: [],
   idx: 0,
   showAns: false,
+  settings: { limit: 20, subjectId: null, chapter: "" },
 };
 
-function nowTs() { return Date.now(); }
+const QUIZ_DEFAULT_LIMIT = 20;
+
+// Interval (days) per level 0~5
+const LEVEL_DAYS = [0, 1, 3, 7, 14, 30];
+
+function nowTs() {
+  return Date.now();
+}
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -17,24 +26,96 @@ function shuffle(arr) {
   return arr;
 }
 
-const QUIZ_DEFAULT_LIMIT = 20;
+function ensureMemory(card) {
+  // Migration from legacy fields (ease/intervalDays/lapses/dueAt) if present.
+  if (card.level == null) {
+    const d = Number(card.intervalDays || 0);
+    card.level = d >= 30 ? 5 : d >= 14 ? 4 : d >= 7 ? 3 : d >= 3 ? 2 : d >= 1 ? 1 : 0;
+  }
+  if (card.wrongCount == null) {
+    card.wrongCount = Number(card.lapses || 0) || 0;
+  }
+  if (card.nextDue == null) {
+    const t = card.dueAt;
+    card.nextDue = t == null || t === "" ? null : Number(t);
+    if (!Number.isFinite(card.nextDue)) card.nextDue = null;
+  }
+}
 
-function buildQuizQueue(limit = QUIZ_DEFAULT_LIMIT) {
+function msDays(days) {
+  return days * 24 * 60 * 60 * 1000;
+}
+
+function applyReview(card, grade) {
+  // grade: 0 wrong, 1 unsure, 2 correct
+  ensureMemory(card);
+
   const now = nowTs();
-  const eligible = (window.cards || []).slice();
+  card.lastReviewedAt = now;
+
+  const prevLevel = Math.min(5, Math.max(0, Number(card.level) || 0));
+  let nextLevel = prevLevel;
+  let nextDue = null;
+
+  if (grade === 2) {
+    nextLevel = Math.min(5, prevLevel + 1);
+    const d = Math.max(1, LEVEL_DAYS[nextLevel] || 1);
+    nextDue = now + msDays(d);
+  } else if (grade === 1) {
+    // "不確定"：稍微降一級，讓它更快回來
+    nextLevel = Math.max(0, prevLevel - 1);
+    const base = LEVEL_DAYS[Math.max(1, prevLevel)] || 1;
+    const d = Math.max(1, Math.round(base * 0.5));
+    nextDue = now + msDays(d);
+  } else {
+    // 錯：回來很快（10 分鐘）
+    nextLevel = Math.max(0, prevLevel - 1);
+    card.wrongCount = (Number(card.wrongCount) || 0) + 1;
+    nextDue = now + 10 * 60 * 1000;
+  }
+
+  card.level = nextLevel;
+  card.nextDue = nextDue;
+
+  // Keep legacy fields loosely in sync (so old data isn't "dead")
+  card.dueAt = nextDue;
+  const dDays = Math.max(1, LEVEL_DAYS[nextLevel] || 1);
+  card.intervalDays = dDays;
+  if (grade === 0) card.lapses = (Number(card.lapses) || 0) + 1;
+}
+
+function buildQuizQueue({ limit = QUIZ_DEFAULT_LIMIT, subjectId = null, chapter = "" } = {}) {
+  const now = nowTs();
+  let eligible = (window.cards || []).slice();
+
+  if (subjectId != null) {
+    eligible = eligible.filter((c) => Number(c.subjectId) === Number(subjectId));
+  }
+  if (chapter) {
+    eligible = eligible.filter((c) => (c.chapter || "") === chapter);
+  }
 
   const due = [];
   const fresh = [];
   const later = [];
 
   for (const c of eligible) {
-    const dueAt = c.dueAt ?? null;
-    if (!dueAt) fresh.push(c);
-    else if (Number(dueAt) <= now) due.push(c);
+    ensureMemory(c);
+    const nd = c.nextDue;
+    if (nd == null) fresh.push(c);
+    else if (Number(nd) <= now) due.push(c);
     else later.push(c);
   }
 
-  shuffle(due); shuffle(fresh); shuffle(later);
+  // Prefer lower level within each group, but keep some randomness
+  const byLevelAsc = (a, b) => (Number(a.level) || 0) - (Number(b.level) || 0);
+  due.sort(byLevelAsc);
+  fresh.sort(byLevelAsc);
+  later.sort(byLevelAsc);
+
+  shuffle(due);
+  shuffle(fresh);
+  shuffle(later);
 
   const out = [];
   for (const group of [due, fresh, later]) {
@@ -44,38 +125,6 @@ function buildQuizQueue(limit = QUIZ_DEFAULT_LIMIT) {
     }
   }
   return out;
-}
-
-function ensureSrs(card) {
-  if (card.ease == null) card.ease = 2.3;
-  if (card.intervalDays == null) card.intervalDays = 0;
-  if (card.lapses == null) card.lapses = 0;
-  if (card.lastReviewedAt == null) card.lastReviewedAt = null;
-  if (card.dueAt == null) card.dueAt = null;
-}
-
-function applyReview(card, grade) {
-  // grade: 0 wrong, 1 unsure, 2 correct
-  ensureSrs(card);
-
-  const now = nowTs();
-  card.lastReviewedAt = now;
-
-  if (grade === 2) {
-    const base = card.intervalDays || 1;
-    card.intervalDays = Math.max(1, Math.round(base * 2));
-    card.ease = Math.min(3.0, (card.ease || 2.3) + 0.05);
-  } else if (grade === 1) {
-    const base = card.intervalDays || 1;
-    card.intervalDays = Math.max(1, Math.round(base * 1.2));
-    card.ease = Math.max(1.3, (card.ease || 2.3) - 0.05);
-  } else {
-    card.lapses = (card.lapses || 0) + 1;
-    card.intervalDays = 1;
-    card.ease = Math.max(1.3, (card.ease || 2.3) - 0.2);
-  }
-
-  card.dueAt = now + card.intervalDays * 24 * 60 * 60 * 1000;
 }
 
 function setText(id, text) {
@@ -108,10 +157,12 @@ function renderQuiz() {
   const toggleBtn = document.getElementById("quizToggleAns");
 
   if (!c) {
-    title.textContent = "測驗完成";
-    progress.textContent = `${quiz.idx}/${quiz.queue.length}`;
-    toggleBtn.textContent = "完成";
-    toggleBtn.onclick = exitQuiz;
+    if (title) title.textContent = "測驗完成";
+    if (progress) progress.textContent = `${quiz.idx}/${quiz.queue.length}`;
+    if (toggleBtn) {
+      toggleBtn.textContent = "完成";
+      toggleBtn.onclick = exitQuiz;
+    }
 
     setText("quizQText", "");
     setText("quizAText", "");
@@ -122,9 +173,9 @@ function renderQuiz() {
     return;
   }
 
-  title.textContent = "測驗";
-  progress.textContent = `${quiz.idx + 1}/${quiz.queue.length}`;
-  toggleBtn.textContent = quiz.showAns ? "隱藏答案 (Space)" : "顯示答案 (Space)";
+  if (title) title.textContent = "測驗";
+  if (progress) progress.textContent = `${quiz.idx + 1}/${quiz.queue.length}`;
+  if (toggleBtn) toggleBtn.textContent = quiz.showAns ? "隱藏答案 (Space)" : "顯示答案 (Space)";
 
   setText("quizQText", (c.questionText || "").trim());
   setImg("quizQImg", c.questionImage || null);
@@ -186,6 +237,17 @@ function bindOnce() {
   });
 }
 
+function deriveScopeFromLeftSelection() {
+  const appState = window.appState || {};
+  const subjectId = appState.subjectId ?? null;
+  const chapter = (appState.chapter || "").trim();
+
+  // If chapter is selected, use chapter scope; else if subject selected, use subject scope; else all.
+  if (subjectId != null && chapter) return { subjectId, chapter };
+  if (subjectId != null) return { subjectId, chapter: "" };
+  return { subjectId: null, chapter: "" };
+}
+
 // Expose to app.js button handler
 window.startQuiz = function startQuiz() {
   const overlay = document.getElementById("quizOverlay");
@@ -194,43 +256,21 @@ window.startQuiz = function startQuiz() {
     return;
   }
 
-  // Keep the flow minimal: start immediately with sensible defaults.
-  // Default scope follows the current left-side selection:
-  // - chapter if both subject + chapter selected
-  // - subject if only subject selected
-  // - all otherwise
-  const appState = window.appState || {};
-  const curSubjectId = appState.subjectId ?? null;
-  const curChapter = appState.chapter ?? "";
-
-  let scope = "all";
-  let subjectId = null;
-  let chapter = "";
-
-  if (curSubjectId != null && curChapter) {
-    scope = "chapter";
-    subjectId = curSubjectId;
-    chapter = curChapter;
-  } else if (curSubjectId != null) {
-    scope = "subject";
-    subjectId = curSubjectId;
-  }
-
+  const { subjectId, chapter } = deriveScopeFromLeftSelection();
   const limit = QUIZ_DEFAULT_LIMIT;
 
-  quiz.active = true;
-  quiz.phase = "quiz";
-  quiz.settings = { scope, limit, subjectId, chapter };
-  quiz.queue = buildQuizQueue({ limit, subjectId, chapter });
-  quiz.idx = 0;
-  quiz.showAns = false;
-
-  if (!quiz.queue.length) {
-    alert("此範圍沒有題目可以出題。請先新增題目或切換科目/章節。");
-    quiz.active = false;
-    quiz.phase = "setup";
+  const queue = buildQuizQueue({ limit, subjectId, chapter });
+  if (!queue.length) {
+    const scopeText = chapter ? "目前章節" : (subjectId != null ? "目前科目" : "全部題目");
+    alert(`此範圍（${scopeText}）沒有可出題的題目。\n請先新增題目或切換科目/章節。`);
     return;
   }
+
+  quiz.active = true;
+  quiz.settings = { limit, subjectId, chapter };
+  quiz.queue = queue;
+  quiz.idx = 0;
+  quiz.showAns = false;
 
   overlay.classList.remove("hidden");
   bindOnce();
