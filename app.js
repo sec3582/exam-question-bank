@@ -359,37 +359,35 @@ function createStorageAdapter(mode) {
   }
 
   async function load() {
-    if (mode === "appdata") return loadAppdata();
     if (mode === "drive") return loadDrive();
     return loadLocal();
   }
 
   async function save() {
-    if (saving) {
-      queued = true;
-      return { ok: true, queued: true };
-    }
-
-    saving = true;
-    try {
-      if (mode === "appdata") await saveAppdata();
-      else if (mode === "drive") await saveDrive();
-      else await saveLocal();
-
-      saving = false;
-
-      if (queued) {
-        queued = false;
-        return await save();
-      }
-
-      return { ok: true };
-    } catch (e) {
-      saving = false;
-      return { ok: false, error: e };
-    }
+  if (saving) {
+    queued = true;
+    return { ok: true, queued: true };
   }
 
+  saving = true;
+  try {
+    // 目前只保留你原本的兩種：drive / local
+    if (mode === "drive") await saveDrive();
+    else await saveLocal();
+
+    saving = false;
+
+    if (queued) {
+      queued = false;
+      return await save();
+    }
+
+    return { ok: true };
+  } catch (e) {
+    saving = false;
+    return { ok: false, error: e };
+  }
+}
 
   return { mode, load, save };
 }
