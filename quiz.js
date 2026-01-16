@@ -81,11 +81,15 @@ function showSetup(show) {
   const blocks = document.querySelectorAll(".quiz-block");
   const footer = document.querySelector(".quiz-footer");
   const toggleBtn = document.getElementById("quizToggleAns");
+  const panel = document.querySelector(".quiz-panel");
 
   if (setup) {
     setup.classList.toggle("hidden", !show);
     setup.setAttribute("aria-hidden", show ? "false" : "true");
   }
+
+  if (panel) panel.classList.toggle("is-setup", show);
+
   blocks.forEach((b) => b.classList.toggle("hidden", show));
   if (footer) footer.classList.toggle("hidden", show);
   if (toggleBtn) toggleBtn.disabled = show;
@@ -183,11 +187,11 @@ function renderQuiz() {
       return true;
     }).length;
 
-    if (title) title.textContent = "測驗設定";
+    if (title) title.textContent = "開始測驗前確認";
     if (progress) progress.textContent = label;
     if (hint) {
       if (scope === "chapter" && (!curSubjectId || !curChapter)) {
-        hint.textContent = "目前未選到章節，將以『目前科目』進行。";
+        hint.textContent = "尚未選到章節，將以『目前科目』進行。";
       } else {
         hint.textContent = `此範圍共有 ${countEligible} 題可出題。`;
       }
