@@ -631,3 +631,19 @@ hr{
 
 /* 如果你希望 chip 一直在最右邊保留 */
 #cloudChip { margin-left: auto; }
+
+/* 讓 topbar 的 cloud chip 看起來可點 */
+.topbar #cloudChip {
+  cursor: pointer;
+  user-select: none;
+}
+.topbar #cloudChip:focus {
+  outline: 2px solid rgba(0,0,0,.15);
+  outline-offset: 2px;
+}
+
+.topbar .tools{
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+}

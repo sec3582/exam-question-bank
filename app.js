@@ -150,44 +150,65 @@ async function saveAppData() {
   }
 }
 
+async function cloudPull() {
+  await loadAppData();
+
+  // 載入雲端後也存回本機（離線可用）
+  await localforage.setItem(STORAGE_KEYS.subjects, subjects);
+  await localforage.setItem(STORAGE_KEYS.cards, cards);
+
+  // 同步給 quiz.js 與 UI
+  window.subjects = subjects;
+  window.cards = cards;
+
+  state.subjectId = subjects[0]?.id ?? null;
+  state.chapter = "";
+  state.selectedCardId = null;
+  state.query = "";
+  state.dirty = false;
+  setSaveChipState("saved");
+
+  renderAll();
+}
+
+async function cloudPush() {
+  await saveAppData();
+}
+
+
 function initCloudActions() {
-  const btnLogin = document.getElementById("btnGoogleSignIn");
+  const chip = document.getElementById("cloudChip");
   const btnPull = document.getElementById("btnCloudPull");
   const btnPush = document.getElementById("btnCloudPush");
 
-  if (btnLogin) {
-    btnLogin.addEventListener("click", async () => {
+  // chip：未登入時點擊＝登入
+  if (chip) {
+    const onChipClick = async () => {
       try {
+        if (accessToken) return; // 已登入就不做事
         setCloudChip("登入中…");
-        await requestToken(true);
+        await requestToken(true); // 你現有的拿 token function
       } catch (e) {
         console.error(e);
-        setCloudChip("未登入", String(e.message || e));
+        setCloudChip("未登入（點我登入）", String(e.message || e));
         alert(String(e.message || e));
       }
+    };
+
+    chip.addEventListener("click", onChipClick);
+    chip.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") onChipClick();
     });
   }
 
+  // 雲端載入：若未登入，會先登入
   if (btnPull) {
     btnPull.addEventListener("click", async () => {
       try {
+        if (!accessToken) await requestToken(true);
         setCloudChip("載入中…");
-        await loadAppData();
-
-        // 下載完也存回本機，讓你離線也能用
-        await localforage.setItem(STORAGE_KEYS.subjects, subjects);
-        await localforage.setItem(STORAGE_KEYS.cards, cards);
-
-        // 重繪
-        window.subjects = subjects;
-        window.cards = cards;
-        state.subjectId = subjects[0]?.id ?? null;
-        state.chapter = "";
-        state.selectedCardId = null;
-        state.query = "";
-        renderAll();
-
-        setCloudChip("載入完成");
+        await cloudPull();  // 你現有的雲端載入
+        setCloudChip("載入完成", "已從雲端載入");
       } catch (e) {
         console.error(e);
         setCloudChip("失敗", String(e.message || e));
@@ -196,12 +217,14 @@ function initCloudActions() {
     });
   }
 
+  // 雲端同步：若未登入，會先登入
   if (btnPush) {
     btnPush.addEventListener("click", async () => {
       try {
+        if (!accessToken) await requestToken(true);
         setCloudChip("同步中…");
-        await saveAppData();
-        setCloudChip("同步完成");
+        await cloudPush();  // 你現有的雲端同步
+        setCloudChip("同步完成", "已同步到雲端");
       } catch (e) {
         console.error(e);
         setCloudChip("失敗", String(e.message || e));
@@ -210,8 +233,10 @@ function initCloudActions() {
     });
   }
 
-  setCloudChip("未登入", "請先登入 Google");
+  // 初始提示（方案 B）
+  setCloudChip(accessToken ? "已登入" : "未登入（點我登入）", "");
 }
+
 
 
 let subjects = [];
