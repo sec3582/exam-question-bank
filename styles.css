@@ -527,6 +527,46 @@ hr{
   background: rgba(250,250,250,.9);
 }
 
+/* ===== Quiz setup panel ===== */
+.quiz-setup{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.quiz-setup__title{
+  font-weight: 900;
+}
+
+.quiz-setup__row{
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.quiz-setup__label{
+  font-size: 12px;
+  opacity: .8;
+  font-weight: 800;
+}
+
+.quiz-setup__hint{
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 18px;
+}
+
+.quiz-setup__actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 /* ===============================
    Fix: 題目清單滿版 + 編輯器欄位加寬
    （貼在 styles.css 最底部）

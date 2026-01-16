@@ -253,6 +253,9 @@ const state = {
   lastSaveError: "",
 };
 
+// Expose minimal state for quiz.js (scope selection)
+window.appState = state;
+
 /* ---------- Utils ---------- */
 function toImageSrc(val) {
   const v = String(val || "").trim();

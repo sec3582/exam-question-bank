@@ -95,6 +95,32 @@
       </div>
 
       <div class="quiz-body">
+        <!-- Quiz Setup (scope / limit) -->
+        <div id="quizSetup" class="quiz-setup hidden" aria-hidden="true">
+          <div class="quiz-setup__title">測驗設定</div>
+
+          <div class="quiz-setup__row">
+            <label class="quiz-setup__label" for="quizScope">範圍</label>
+            <select id="quizScope" class="input">
+              <option value="all">全部題目</option>
+              <option value="subject">目前科目</option>
+              <option value="chapter">目前章節</option>
+            </select>
+          </div>
+
+          <div class="quiz-setup__row">
+            <label class="quiz-setup__label" for="quizLimit">題數</label>
+            <input id="quizLimit" class="input" type="number" min="1" step="1" value="20" />
+          </div>
+
+          <div class="quiz-setup__hint" id="quizSetupHint"></div>
+
+          <div class="quiz-setup__actions">
+            <button id="quizStart" class="btn primary" type="button">開始</button>
+            <button id="quizCancel" class="btn ghost" type="button">取消</button>
+          </div>
+        </div>
+
         <div class="quiz-block">
           <div class="quiz-label">題目</div>
           <div id="quizQText" class="quiz-text"></div>
