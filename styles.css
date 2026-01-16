@@ -78,15 +78,15 @@ img{ max-width: 100%; }
 .pet{
   width: 40px;
   height: 40px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.92);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+  border: none;              /* 關掉框 */
+  background: transparent;   /* 保持透明 */
+  box-shadow: none;
   display: grid;
   place-items: center;
   user-select: none;
   cursor: default;
 }
+
 
 .pet--pixel .pet__svg{
   width: 32px;
