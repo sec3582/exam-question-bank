@@ -179,7 +179,7 @@ function initCloudActions() {
         await localforage.setItem(STORAGE_KEYS.cards, cards);
 
         // 重繪
-        window.subjects = subjects;createStorageAdapter(mode)
+        window.subjects = subjects;
         window.cards = cards;
         state.subjectId = subjects[0]?.id ?? null;
         state.chapter = "";
