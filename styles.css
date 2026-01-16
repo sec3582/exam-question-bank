@@ -64,9 +64,63 @@ img{ max-width: 100%; }
 }
 
 .brand{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
   font-weight: 900;
   letter-spacing: .2px;
   color: var(--text);
+}
+
+.brand__title{ white-space: nowrap; }
+
+/* ===== Study Pet (tiny companion) ===== */
+.pet{
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+  display: grid;
+  place-items: center;
+  user-select: none;
+  cursor: default;
+}
+
+.pet::before{
+  content: attr(data-emoji);
+  font-size: 20px;
+  line-height: 1;
+  transform-origin: 50% 70%;
+}
+
+/* states */
+.pet.is-idle::before{ animation: pet-bob 1.8s ease-in-out infinite; }
+.pet.is-eat::before{ animation: pet-eat 0.85s ease-in-out infinite; }
+.pet.is-sleep::before{ animation: pet-sleep 2.2s ease-in-out infinite; }
+.pet.is-focus::before{ animation: pet-focus 1.2s ease-in-out infinite; }
+
+@keyframes pet-bob{
+  0%,100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(-2px) rotate(-4deg); }
+}
+@keyframes pet-eat{
+  0%,100%{ transform: translateY(0) rotate(0deg) scale(1); }
+  35%{ transform: translateY(1px) rotate(6deg) scale(0.98); }
+  70%{ transform: translateY(-1px) rotate(-6deg) scale(1.02); }
+}
+@keyframes pet-sleep{
+  0%,100%{ transform: translateY(0) scale(1); opacity: .92; }
+  50%{ transform: translateY(1px) scale(0.98); opacity: .75; }
+}
+@keyframes pet-focus{
+  0%,100%{ transform: translateY(0) rotate(0deg); }
+  20%{ transform: translateY(-1px) rotate(-2deg); }
+  40%{ transform: translateY(0) rotate(2deg); }
+  60%{ transform: translateY(-1px) rotate(-2deg); }
+  80%{ transform: translateY(0) rotate(2deg); }
 }
 
 .tools{
@@ -167,6 +221,23 @@ a:focus-visible,
   top: 72px; /* align with topbar */
   align-self: start;
 }
+
+/* 章節列表：固定高度、內部滾動（科目/章節變多也不會把側欄撐爆） */
+#chaptersTree{
+  max-height: clamp(200px, 34vh, 420px);
+  overflow: auto;
+  padding-right: 6px; /* 留一點空間避免內容貼住捲軸 */
+}
+
+/* 小小的捲軸美化（支援的瀏覽器才會生效） */
+#chaptersTree::-webkit-scrollbar{ width: 10px; }
+#chaptersTree::-webkit-scrollbar-thumb{
+  background: rgba(64, 89, 173, 0.22);
+  border-radius: 999px;
+  border: 3px solid rgba(255,255,255,0.0);
+  background-clip: padding-box;
+}
+#chaptersTree::-webkit-scrollbar-thumb:hover{ background: rgba(64, 89, 173, 0.34); }
 
 /* Panels */
 .panel{

@@ -1260,3 +1260,54 @@ window.addEventListener("DOMContentLoaded", async () => {
     open(el.src);
   });
 })();
+
+
+/* ---------- Study Pet (tiny companion) ---------- */
+(function setupStudyPet(){
+  const el = document.getElementById("studyPet");
+  if (!el) return;
+
+  const STATES = {
+    eat:   { cls: "is-eat",   emoji: "🍙", title: "補充能量中" },
+    idle:  { cls: "is-idle",  emoji: "🐾", title: "陪你一起在這裡" },
+    focus: { cls: "is-focus", emoji: "📚", title: "一起專心一下" },
+    sleep: { cls: "is-sleep", emoji: "😴", title: "先休息一下，等等再戰" },
+  };
+
+  function pickStateByTime(d = new Date()){
+    const h = d.getHours();
+    // 06–09 吃早餐、09–18 陪讀、18–22 再專心一波、22–06 睡覺
+    if (h >= 6 && h < 9) return "eat";
+    if (h >= 9 && h < 18) return "idle";
+    if (h >= 18 && h < 22) return "focus";
+    return "sleep";
+  }
+
+  function applyState(key){
+    const st = STATES[key] || STATES.idle;
+    el.classList.remove("is-eat","is-idle","is-focus","is-sleep");
+    el.classList.add(st.cls);
+    el.dataset.emoji = st.emoji;
+    el.title = `陪讀小夥伴｜${st.title}`;
+  }
+
+  // 偶爾做個小動作（不打擾，但有陪伴感）
+  function maybeDoTinyAction(){
+    const r = Math.random();
+    // 10% 機率短暫換成「focus」，再回到原狀
+    if (r < 0.10) {
+      const base = pickStateByTime();
+      applyState("focus");
+      setTimeout(() => applyState(base), 2500);
+    }
+  }
+
+  function tick(){
+    applyState(pickStateByTime());
+    maybeDoTinyAction();
+  }
+
+  tick();
+  // 每分鐘檢查一次（時間到會自然換動作）
+  setInterval(tick, 60 * 1000);
+})();
