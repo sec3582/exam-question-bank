@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jill 公職測驗小工具</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">Jill 公職測驗小工具</div>
+
+      <div class="actions">
+        <button id="btnAdd" class="btn primary" type="button">＋ 新增題目</button>
+        <button id="btnQuiz" class="btn" type="button">▶ 開始測驗</button>
+      </div>
+
+      <div class="tools">
+        <input id="search" class="input" placeholder="搜尋題目…" />
+        <button id="btnExport" class="btn ghost" type="button">匯出 JSON</button>
+        <button id="btnImport" class="btn ghost" type="button">匯入 JSON</button>
+      </div>
+    </header>
+
+    <!-- Two columns -->
+    <div class="layout">
+      <!-- Left: subjects/chapters -->
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-title">科目</div>
+          <div id="subjectsList" class="list"></div>
+          <button id="btnAddSubject" class="btn small ghost" type="button">＋ 新增科目</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">章節</div>
+          <div id="chaptersTree" class="tree"></div>
+        </div>
+      </aside>
+
+      <!-- Right: workspace -->
+      <main class="workspace">
+        <!-- Manage: list -->
+        <section class="panel workspace-top">
+          <div class="panel-title">題目清單</div>
+          <div id="cardsList" class="cards-list"></div>
+        </section>
+
+        <!-- Edit/Preview -->
+        <section class="panel workspace-bottom">
+          <div class="panel-title">
+            編輯器
+            <span id="saveChip" class="chip">已儲存</span>
+            <button id="btnSaveNow" type="button" class="btn ghost small">儲存</button>
+          </div>
+          <div id="editorArea"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Image Lightbox -->
+  <div id="imgLightbox" class="img-lightbox hidden" role="dialog" aria-modal="true">
+    <div class="img-lightbox__backdrop"></div>
+    <div class="img-lightbox__panel">
+      <div class="img-lightbox__bar">
+        <div class="img-lightbox__hint">滾輪縮放｜拖曳移動｜Esc 關閉</div>
+        <button id="imgLightboxClose" class="btn ghost" type="button">關閉</button>
+      </div>
+      <div id="imgLightboxStage" class="img-lightbox__stage">
+        <img id="imgLightboxImg" class="img-lightbox__img" alt="preview" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Overlay -->
+  <div id="quizOverlay" class="quiz-overlay hidden" aria-hidden="true">
+    <div class="quiz-panel">
+      <div class="quiz-bar">
+        <div class="quiz-title">
+          <div id="quizTitleMain">測驗</div>
+          <div id="quizProgress" class="quiz-progress"></div>
+        </div>
+        <div class="quiz-actions">
+          <button id="quizToggleAns" class="btn" type="button">顯示答案 (Space)</button>
+          <button id="quizExit" class="btn ghost" type="button">離開 (Esc)</button>
+        </div>
+      </div>
+
+      <div class="quiz-body">
+        <div class="quiz-block">
+          <div class="quiz-label">題目</div>
+          <div id="quizQText" class="quiz-text"></div>
+          <img id="quizQImg" class="quiz-img hidden" alt="question image" />
+        </div>
+
+        <div class="quiz-block">
+          <div class="quiz-label">答案</div>
+          <div id="quizAText" class="quiz-text hidden"></div>
+          <img id="quizAImg" class="quiz-img hidden" alt="answer image" />
+        </div>
+      </div>
+
+      <div class="quiz-footer">
+        <button id="quizWrong" class="btn ghost" type="button">1 錯</button>
+        <button id="quizUnsure" class="btn ghost" type="button">2 不確定</button>
+        <button id="quizCorrect" class="btn primary" type="button">3 對</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+  <script src="./app.js"></script>
+  <script src="./quiz.js"></script>
+</body>
+</html>

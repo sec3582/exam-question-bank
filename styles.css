@@ -1,0 +1,617 @@
+/* =========================================
+   Jill 公職測驗小工具 — Theme CSS (rewrite)
+   Palette:
+   - Primary:   #4059ad
+   - Secondary: #6b9ac4 (sidebar selected)
+   - Success:   #97d8c4 (card selected)
+   - Bg:        #eff2f1 (cool) / warm default uses #f3f1ec
+   - Accent:    #f4b942
+   ========================================= */
+
+/* ===== CSS Variables ===== */
+:root{
+  --primary: #4059ad;
+  --secondary: #6b9ac4;
+  --success: #97d8c4;
+  --accent: #f4b942;
+
+  /* Warm reading background (slightly warmer than #eff2f1) */
+  --bg: #f3f1ec;
+  --surface: #fcfbf9;
+  --surface-2: rgba(255,255,255,.92);
+
+  --text: #1f2937;
+  --muted: #6b7280;
+
+  --border: rgba(15, 23, 42, 0.10);
+  --border-strong: rgba(15, 23, 42, 0.16);
+
+  --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.07);
+  --shadow-md: 0 10px 26px rgba(15, 23, 42, 0.12);
+
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 12px;
+}
+
+/* ===== Base ===== */
+*{ box-sizing: border-box; }
+html, body{ height: 100%; }
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+img{ max-width: 100%; }
+.hidden{ display: none !important; }
+
+/* ===== Layout ===== */
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+.brand{
+  font-weight: 900;
+  letter-spacing: .2px;
+  color: var(--text);
+}
+
+.tools{
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.layout{
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+@media (max-width: 1024px){
+  .layout{ grid-template-columns: 1fr; }
+  .sidebar{ position: static !important; top: auto !important; }
+}
+
+/* ===== Buttons / Inputs ===== */
+.btn{
+  appearance: none;
+  border: 1px solid rgba(64, 89, 173, 0.22);
+  background: rgba(255,255,255,.88);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, color .12s ease;
+}
+.btn:hover{
+  background: rgba(64, 89, 173, 0.06);
+  border-color: rgba(64, 89, 173, 0.35);
+}
+.btn:active{ transform: translateY(1px); }
+
+.btn.primary{
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn.primary:hover{
+  background: #3647a0;
+  border-color: #3647a0;
+}
+
+.btn.ghost{
+  background: transparent;
+  border-color: rgba(64, 89, 173, 0.18);
+  color: var(--primary);
+}
+.btn.ghost:hover{
+  background: rgba(64, 89, 173, 0.08);
+}
+
+.input,
+input,
+select,
+textarea{
+  border: 1px solid rgba(64, 89, 173, 0.22);
+  background: rgba(255,255,255,.92);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+textarea{ min-height: 120px; resize: vertical; }
+
+.input:focus,
+input:focus,
+select:focus,
+textarea:focus{
+  outline: none;
+  border-color: rgba(64, 89, 173, 0.55);
+  box-shadow: 0 0 0 3px rgba(64, 89, 173, 0.16);
+}
+
+/* focus ring (keyboard only) – avoid ugly orange */
+button:focus, a:focus, [role="button"]:focus{ outline: none; }
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(64, 89, 173, 0.18);
+  border-radius: 12px;
+}
+
+/* ===== Sidebar ===== */
+.sidebar{
+  display: grid;
+  gap: 12px;
+
+  position: sticky;
+  top: 72px; /* align with topbar */
+  align-self: start;
+}
+
+/* Panels */
+.panel{
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-title{
+  font-weight: 900;
+  color: var(--text);
+  margin: 4px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sidebar item chips/rows (if used) */
+.chip{
+  width: 100%;
+  text-align: left;
+
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.92);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  cursor: pointer;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+
+  transition: background .12s ease, border-color .12s ease, transform .12s ease, box-shadow .12s ease;
+}
+.chip:hover{
+  background: rgba(107, 154, 196, 0.10);
+  border-color: rgba(107, 154, 196, 0.35);
+  box-shadow: 0 6px 18px rgba(107, 154, 196, 0.16);
+  transform: translateY(-1px);
+}
+
+/* Sidebar selected: use secondary color (#6b9ac4), no left border line */
+.chip.is-selected,
+.sidebar .selected,
+.sidebar .active{
+  background: rgba(107, 154, 196, 0.22) !important;
+  border-color: rgba(107, 154, 196, 0.45) !important;
+  box-shadow: none !important;
+}
+
+/* ===== Workspace / Editor ===== */
+.workspace{
+  min-width: 0;
+}
+
+.workspace-top{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.workspace-bottom{
+  margin-top: 12px;
+}
+
+.editor-grid{
+  display: grid;
+  grid-template-columns: 260px 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 1100px){
+  .editor-grid{ grid-template-columns: 1fr; }
+}
+
+/* Field blocks */
+.field{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.small{ font-size: 12px; color: var(--muted); }
+
+/* Image boxes / preview */
+.img-box{
+  margin-top: 10px;
+  border: 1px dashed rgba(64, 89, 173, 0.25);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  background: rgba(255,255,255,.75);
+}
+.img-actions{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.img-hint{
+  color: var(--muted);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+.img-preview{
+  display: block;
+  width: 100%;
+  max-height: 520px; /* bigger for reading */
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  cursor: zoom-in;
+}
+
+/* ===== Cards list (Question list) ===== */
+.cards-list{
+  height: 200px; /* scroll list */
+  overflow: auto;
+  padding: 6px;
+  scrollbar-gutter: stable;
+
+  display: grid;
+  gap: 10px;
+  background: transparent;
+}
+
+.card-row{
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease, transform .12s ease;
+}
+.card-row:hover{
+  background: rgba(151, 216, 196, 0.12); /* light success */
+  border-color: rgba(151, 216, 196, 0.35);
+  box-shadow: 0 6px 18px rgba(151, 216, 196, 0.22);
+  transform: translateY(-1px);
+}
+.card-row:active{ transform: translateY(0px); }
+
+/* Card selected: use success color (#97d8c4), no left border line */
+.card-row.is-selected{
+  background: rgba(151, 216, 196, 0.35);
+  border-color: rgba(151, 216, 196, 0.55);
+  box-shadow: none;
+}
+
+.card-main{ min-width: 0; }
+
+.card-title{
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.card-summary{
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-meta{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.pill{
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(239, 242, 241, 0.90);
+  border: 1px solid rgba(64, 89, 173, 0.12);
+  color: var(--primary);
+}
+
+/* Optional badge for "has image" or hints */
+.badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(244, 185, 66, 0.28); /* accent */
+  color: #4a3b00;
+  border: 1px solid rgba(244, 185, 66, 0.45);
+}
+
+/* ===== Empty state ===== */
+.cards-empty{
+  padding: 14px;
+  color: var(--muted);
+  background: rgba(255,255,255,.72);
+  border: 1px dashed rgba(64, 89, 173, 0.20);
+  border-radius: var(--radius-lg);
+}
+
+/* ===== Lightbox (image zoom) ===== */
+.img-lightbox.hidden{ display: none; }
+
+.img-lightbox{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.img-lightbox__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+
+.img-lightbox__panel{
+  position: relative;
+  width: min(1100px, 96vw);
+  height: min(86vh, 900px);
+  margin: 6vh auto 0;
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.img-lightbox__bar{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+.img-lightbox__hint{
+  font-size: 12px;
+  opacity: .75;
+}
+
+.img-lightbox__stage{
+  position: relative;
+  overflow: hidden;
+  background: rgba(250,250,250,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+.img-lightbox__stage:active{ cursor: grabbing; }
+
+.img-lightbox__img{
+  --tx: 0px;
+  --ty: 0px;
+  --scale: 1;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--scale));
+  transform-origin: center center;
+
+  max-width: 96%;
+  max-height: 96%;
+  user-select: none;
+  -webkit-user-drag: none;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+}
+
+/* ===== Minor utilities ===== */
+hr{
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 14px 0;
+}
+/* ========== Quiz Overlay ========== */
+.quiz-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,.45);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+.quiz-panel{
+  width: min(1100px, 96vw);
+  height: min(86vh, 900px);
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+.quiz-bar{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  background: rgba(250,250,250,.9);
+}
+.quiz-title{ display:flex; flex-direction: column; gap: 2px; }
+#quizTitleMain{ font-weight: 900; }
+.quiz-progress{ font-size: 12px; opacity: .7; }
+.quiz-actions{ display:flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.quiz-body{
+  padding: 14px;
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+.quiz-block{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.quiz-label{ font-weight: 900; opacity: .85; }
+.quiz-text{ white-space: pre-wrap; }
+.quiz-img{
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+}
+.quiz-footer{
+  padding: 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  display:flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  background: rgba(250,250,250,.9);
+}
+
+/* ===============================
+   Fix: 題目清單滿版 + 編輯器欄位加寬
+   （貼在 styles.css 最底部）
+   =============================== */
+
+/* 1) 題目清單：不要橫向排列（會導致清單不滿版） */
+.workspace-top{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;   /* 讓內部元素撐滿寬 */
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* 讓題目清單本體確保撐滿 */
+.workspace-top .panel-title{
+  margin: 0;
+}
+.cards-list{
+  width: 100%;
+}
+
+/* 你原本 cards-list 固定 height:200px 太矮，建議改成更接近工作台的高度 */
+.cards-list{
+  height: min(34vh, 360px);
+}
+
+/* 2) 編輯器：讓題目/答案更寬（答案最寬） */
+.editor-grid{
+  grid-template-columns: 200px 2fr 3fr; /* 左(章節/控制) | 題目 | 答案 */
+  gap: 16px;
+}
+
+/* 3) 確保 textarea 真正吃滿欄位寬度 */
+.field textarea,
+#ed-question,
+#ed-answer{
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  min-width: 0;
+}
+
+/* ===============================
+   Fix 1：讓「編輯器」標題列不被 #saveChip 撐爆
+   =============================== */
+
+#saveChip.chip{
+  width: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* panel-title 也保險：不要換行 */
+.workspace-bottom .panel-title{
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* ===============================
+   Fix 2：grid 內的欄位不要撐爆（章節 input 超出）
+   =============================== */
+
+.editor-grid > .field{
+  min-width: 0;
+}
+
+.editor-grid .field .input,
+#ed-chapter{
+  width: 100%;
+  min-width: 0;
+}
+
+/* Topbar: actions + tools 都靠右（actions 在左，tools 在最右） */
+.topbar .actions{
+  margin-left: auto;          /* 關鍵：把 actions 整組推到右側 */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar .tools{
+  margin-left: 12px;          /* 取消原本 auto，讓它貼著 actions */
+}
